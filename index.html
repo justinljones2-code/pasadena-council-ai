@@ -1,1 +1,392 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PasadenaCouncilAI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #162335;
+    --navy-light: #1e3250;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #8a6e30;
+    --cream: #f4efe6;
+    --cream-dim: #d4cfc6;
+    --green: #2ecc71;
+    --blue: #4a90d9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--navy);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  #header {
+    padding: 20px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--navy);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+  #title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .app-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--cream); }
+  .app-title span { color: var(--gold); font-style: italic; }
+  .app-sub { font-size: 10px; color: var(--gold-dim); letter-spacing: 0.15em; font-family: monospace; margin-top: 2px; }
+  #header-btns { display: flex; gap: 8px; align-items: center; }
+  .hbtn { border-radius: 6px; padding: 6px 12px; font-size: 11px; cursor: pointer; border: 1px solid; font-family: monospace; letter-spacing: 0.1em; background: transparent; }
+  #clear-btn { border-color: rgba(255,255,255,0.1); color: var(--cream-dim); display: none; }
+  #key-btn { border-color: rgba(201,168,76,0.4); color: var(--gold); }
+  #key-btn.live { border-color: rgba(46,204,113,0.4); color: var(--green); }
+  #key-panel { background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  #key-panel label { display: block; font-size: 10px; color: var(--gold-dim); font-family: monospace; letter-spacing: 0.15em; margin-bottom: 8px; }
+  #key-row { display: flex; gap: 8px; }
+  #api-key-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: var(--cream); font-size: 13px; font-family: monospace; }
+  #api-key-input:focus { outline: none; border-color: rgba(201,168,76,0.4); }
+  #save-btn { background: var(--gold); border: none; border-radius: 6px; padding: 8px 16px; color: var(--navy); font-size: 12px; cursor: pointer; font-weight: 500; }
+  #save-btn:disabled { background: rgba(255,255,255,0.1); color: #555; cursor: default; }
+  #key-hint { font-size: 10px; color: var(--gold-dim); margin-top: 8px; line-height: 1.5; }
+  #modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .mode-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 6px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .mode-btn.active-qa { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.5); }
+  .mode-btn.active-predict { background: rgba(74,144,217,0.1); border-color: rgba(74,144,217,0.5); }
+  .mode-btn.active-persona { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.5); }
+  .mode-icon { font-size: 15px; margin-bottom: 3px; }
+  .mode-label { font-size: 10px; font-family: monospace; letter-spacing: 0.08em; color: var(--cream-dim); }
+  .mode-btn.active-qa .mode-label { color: var(--gold); }
+  .mode-btn.active-predict .mode-label { color: var(--blue); }
+  .mode-btn.active-persona .mode-label { color: var(--green); }
+  #mode-desc { font-size: 10px; color: var(--gold-dim); font-family: monospace; letter-spacing: 0.1em; }
+  #messages { flex: 1; overflow-y: auto; padding: 16px 20px 8px; -webkit-overflow-scrolling: touch; }
+  #welcome { text-align: center; padding: 24px 0 20px; }
+  .welcome-icon { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--navy-light), var(--navy)); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--gold); margin: 0 auto 14px; }
+  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--cream); margin-bottom: 6px; }
+  .welcome-sub { font-size: 12px; color: var(--gold-dim); line-height: 1.6; max-width: 260px; margin: 0 auto; }
+  #suggestions { margin-bottom: 16px; }
+  #suggestions-label { font-size: 10px; color: var(--gold-dim); font-family: monospace; letter-spacing: 0.15em; text-align: center; margin-bottom: 10px; }
+  .suggestion { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 11px 14px; color: var(--cream-dim); font-size: 13px; cursor: pointer; text-align: left; line-height: 1.4; margin-bottom: 6px; font-family: 'DM Sans', sans-serif; font-weight: 300; display: block; }
+  .suggestion-arrow { color: var(--gold); margin-right: 8px; font-size: 10px; }
+  .msg-row { display: flex; margin-bottom: 16px; animation: fadeUp 0.3s ease; }
+  .msg-row.user { justify-content: flex-end; }
+  .msg-row.assistant { justify-content: flex-start; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--navy-light), var(--navy)); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--gold); flex-shrink: 0; margin-right: 8px; margin-top: 2px; }
+  .msg-bubble { max-width: 80%; border-radius: 16px; padding: 11px 15px; font-size: 14px; line-height: 1.75; font-weight: 300; white-space: pre-wrap; word-break: break-word; }
+  .msg-row.user .msg-bubble { background: linear-gradient(135deg, var(--navy-light), var(--navy-mid)); border: 1px solid rgba(74,144,217,0.3); color: var(--gold-light); border-radius: 16px 16px 4px 16px; }
+  .msg-row.assistant .msg-bubble { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--cream-dim); border-radius: 16px 16px 16px 4px; }
+  .typing { display: flex; gap: 5px; align-items: center; padding: 4px 2px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s ease-in-out infinite; opacity: 0.7; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  #input-area { padding: 10px 20px 40px; background: var(--navy); position: sticky; bottom: 0; }
+  #input-box { display: flex; gap: 10px; align-items: flex-end; background: rgba(255,255,255,0.04); border: 1px solid rgba(201,168,76,0.25); border-radius: 14px; padding: 10px 12px; }
+  #input-box.mode-predict { border-color: rgba(74,144,217,0.25); }
+  #input-box.mode-persona { border-color: rgba(46,204,113,0.25); }
+  #mode-icon-input { font-size: 14px; color: var(--gold); flex-shrink: 0; padding-bottom: 2px; }
+  #user-input { flex: 1; background: transparent; border: none; color: var(--cream); font-size: 14px; line-height: 1.5; font-family: 'DM Sans', sans-serif; font-weight: 300; resize: none; max-height: 120px; overflow-y: auto; }
+  #user-input:focus { outline: none; }
+  #send-btn { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: all 0.2s; background: var(--gold); color: var(--navy); }
+  #send-btn:disabled { background: rgba(255,255,255,0.07); color: #444; cursor: default; }
+  #footer-text { text-align: center; font-size: 10px; color: rgba(30,50,80,0.8); font-family: monospace; letter-spacing: 0.1em; margin-top: 8px; }
+  .hidden { display: none !important; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8);} 50%{opacity:1;transform:scale(1);} }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="title-row">
+    <div>
+      <div class="app-title">Pasadena<span>CouncilAI</span></div>
+      <div class="app-sub">CITY INTELLIGENCE LAYER</div>
+    </div>
+    <div id="header-btns">
+      <button class="hbtn" id="clear-btn" onclick="clearChat()">CLEAR</button>
+      <button class="hbtn" id="key-btn" onclick="toggleKeyPanel()">API KEY</button>
+    </div>
+  </div>
+  <div id="key-panel">
+    <label>ANTHROPIC API KEY</label>
+    <div id="key-row">
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="onKeyInput()" />
+      <button id="save-btn" onclick="saveKey()" disabled>Save</button>
+    </div>
+    <div id="key-hint">Used only in this session · Never stored · Get one at console.anthropic.com</div>
+  </div>
+  <div id="modes">
+    <button class="mode-btn active-qa" id="btn-qa" onclick="setMode('qa')">
+      <div class="mode-icon">⚖</div>
+      <div class="mode-label">Q&amp;A</div>
+    </button>
+    <button class="mode-btn" id="btn-predict" onclick="setMode('predict')">
+      <div class="mode-icon">◎</div>
+      <div class="mode-label">PREDICT</div>
+    </button>
+    <button class="mode-btn" id="btn-persona" onclick="setMode('persona')">
+      <div class="mode-icon">◈</div>
+      <div class="mode-label">PERSONA</div>
+    </button>
+  </div>
+  <div id="mode-desc">ASK ANYTHING ABOUT PASADENA COUNCIL HISTORY</div>
+</div>
+
+<div id="messages">
+  <div id="welcome">
+    <div class="welcome-icon">⚖</div>
+    <div class="welcome-title">City of Pasadena</div>
+    <div class="welcome-sub">Ask about council history, predict votes, or speak as an elected official</div>
+  </div>
+  <div id="suggestions">
+    <div id="suggestions-label">TRY ASKING</div>
+    <div id="suggestion-list"></div>
+  </div>
+</div>
+
+<div id="input-area">
+  <div id="input-box">
+    <div id="mode-icon-input">⚖</div>
+    <textarea id="user-input" rows="1"
+      placeholder="Ask about a vote, decision, or policy..."
+      oninput="autoResize(this)"
+      onkeydown="onKeyDown(event)"></textarea>
+    <button id="send-btn" onclick="sendMessage()" disabled>↑</button>
+  </div>
+  <div id="footer-text">PASADENA COUNCIL INTELLIGENCE · POWERED BY CLAUDE</div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are PasadenaCouncilAI, an expert assistant on the City of Pasadena's legislative history, governance, and city council dynamics.
+
+YOUR CAPABILITIES:
+
+1. Historical Record Expert - cite meeting dates, agenda item numbers, vote outcomes, council discussion, and relevant context.
+
+2. Vote Prediction Engine - analyze historical voting patterns, public statements, district priorities, stakeholder alignment, and council bloc dynamics. Express predictions as probability with evidence chain.
+
+3. Councilmember Persona Mode - adopt known policy positions and communication style. Label responses [Speaking as Councilmember ___]. Never fabricate positions.
+
+4. Agenda & Meeting Intelligence - summarize decisions, staff report context, and policy trends.
+
+CURRENT PASADENA COUNCIL (2026):
+- Mayor: Victor Gordo (citywide elected, independent of district seats)
+- District 1: Tyron Hampton
+- District 2: Rick Cole
+- District 3: Justin Jones
+- District 4: Gene Masuda
+- District 5: Jessica Rivas
+- District 6: Steve Madison
+- District 7: Jason Lyon
+
+Key policy areas: housing density (AB 2011, SB 9), Rose Bowl finances, Huntington Memorial Hospital development, Pasadena Water & Power, HOPE homelessness initiative, historic preservation vs. new development, A Line ridership, Colorado Boulevard corridor.
+
+RESPONSE PRINCIPLES:
+- Ground claims in documented record. Distinguish confirmed votes from analysis.
+- Show evidence chain for vote predictions.
+- Stay in character for persona mode but break frame for direct factual questions.
+- Flag gaps honestly when records are unavailable.
+- Be nonpartisan at all times.`;
+
+const SUGGESTIONS = {
+  qa: [
+    "What did the council decide about the Rose Bowl in 2023?",
+    "How has Pasadena responded to state housing mandates?",
+    "What is the HOPE initiative and when was it adopted?",
+    "History of the Huntington Hospital development debate",
+  ],
+  predict: [
+    "How will Victor Gordo vote on upzoning near the Gold Line?",
+    "Predict the council vote on a new homeless shelter in District 3",
+    "Will Steve Madison support increased development fees?",
+    "How will Gene Masuda vote on historic preservation appeals?",
+  ],
+  persona: [
+    "As Victor Gordo, respond to a proposed hotel near the Rose Bowl",
+    "Speak as Jessica Rivas on a rent stabilization ordinance",
+    "As Jason Lyon, address a new bike lane on Colorado Blvd",
+    "Speak as Rick Cole on a police oversight measure",
+  ],
+};
+
+const MODE_META = {
+  qa:      { icon: "⚖", desc: "ASK ANYTHING ABOUT PASADENA COUNCIL HISTORY", placeholder: "Ask about a vote, decision, or policy...", prefix: "" },
+  predict: { icon: "◎", desc: "HOW WILL A COUNCILMEMBER VOTE?", placeholder: "Who and what item should I predict?", prefix: "Provide a vote prediction analysis: " },
+  persona: { icon: "◈", desc: "SPEAK AS A COUNCILMEMBER", placeholder: "Which councilmember and what topic?", prefix: "Respond in persona as this councilmember: " },
+};
+
+let currentMode = "qa";
+let apiKey = "";
+let messages = [];
+let loading = false;
+
+function onKeyInput() {
+  document.getElementById("save-btn").disabled = !document.getElementById("api-key-input").value.trim();
+}
+
+function saveKey() {
+  apiKey = document.getElementById("api-key-input").value.trim();
+  document.getElementById("key-panel").classList.add("hidden");
+  const btn = document.getElementById("key-btn");
+  btn.textContent = "● LIVE";
+  btn.classList.add("live");
+  updateSendBtn();
+}
+
+function toggleKeyPanel() {
+  document.getElementById("key-panel").classList.toggle("hidden");
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  ["qa","predict","persona"].forEach(m => {
+    document.getElementById("btn-" + m).className = "mode-btn" + (m === mode ? " active-" + m : "");
+  });
+  document.getElementById("mode-desc").textContent = MODE_META[mode].desc;
+  document.getElementById("mode-icon-input").textContent = MODE_META[mode].icon;
+  document.getElementById("user-input").placeholder = MODE_META[mode].placeholder;
+  document.getElementById("input-box").className = "mode-" + mode;
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const list = document.getElementById("suggestion-list");
+  if (!list) return;
+  list.innerHTML = "";
+  SUGGESTIONS[currentMode].forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "suggestion";
+    btn.innerHTML = '<span class="suggestion-arrow">▸</span>' + s;
+    btn.onclick = () => sendMessage(s);
+    list.appendChild(btn);
+  });
+}
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  updateSendBtn();
+}
+
+function updateSendBtn() {
+  const val = document.getElementById("user-input").value.trim();
+  document.getElementById("send-btn").disabled = !val || loading || !apiKey;
+}
+
+function onKeyDown(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function clearChat() {
+  messages = [];
+  const msgs = document.getElementById("messages");
+  msgs.innerHTML = `
+    <div id="welcome">
+      <div class="welcome-icon">⚖</div>
+      <div class="welcome-title">City of Pasadena</div>
+      <div class="welcome-sub">Ask about council history, predict votes, or speak as an elected official</div>
+    </div>
+    <div id="suggestions">
+      <div id="suggestions-label">TRY ASKING</div>
+      <div id="suggestion-list"></div>
+    </div>`;
+  renderSuggestions();
+  document.getElementById("clear-btn").style.display = "none";
+}
+
+function hideWelcome() {
+  ["welcome","suggestions"].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+  document.getElementById("clear-btn").style.display = "block";
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function appendMessage(role, content, isTyping) {
+  hideWelcome();
+  const msgs = document.getElementById("messages");
+  const row = document.createElement("div");
+  row.className = "msg-row " + role;
+  if (role === "assistant") {
+    row.innerHTML = `<div class="msg-avatar">⚖</div><div class="msg-bubble">${isTyping ? '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>' : escHtml(content)}</div>`;
+  } else {
+    row.innerHTML = `<div class="msg-bubble">${escHtml(content)}</div>`;
+  }
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  return row;
+}
+
+async function sendMessage(text) {
+  const input = document.getElementById("user-input");
+  const userText = (text || input.value).trim();
+  if (!userText || loading) return;
+  if (!apiKey) { toggleKeyPanel(); return; }
+
+  input.value = "";
+  input.style.height = "auto";
+  loading = true;
+  updateSendBtn();
+
+  const prefixed = MODE_META[currentMode].prefix + userText;
+  appendMessage("user", userText);
+  const typingRow = appendMessage("assistant", "", true);
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-6",
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [
+          ...messages,
+          { role: "user", content: prefixed }
+        ],
+      }),
+    });
+
+    const rawText = await res.text();
+    typingRow.remove();
+
+    if (!res.ok) {
+      appendMessage("assistant", "API Error " + res.status + ": " + rawText.slice(0, 300));
+      loading = false; updateSendBtn(); return;
+    }
+
+    const data = JSON.parse(rawText);
+    const reply = data.content && data.content[0] && data.content[0].text
+      ? data.content[0].text
+      : "Unexpected response: " + JSON.stringify(data).slice(0, 200);
+
+    messages.push({ role: "user", content: prefixed });
+    messages.push({ role: "assistant", content: reply });
+    appendMessage("assistant", reply);
+
+  } catch(err) {
+    typingRow.remove();
+    appendMessage("assistant", "Error: " + err.message);
+  }
+
+  loading = false;
+  updateSendBtn();
+}
+
+renderSuggestions();
+</script>
+</body>
+</html>
